@@ -11,16 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-     Schema::create('habits', function (Blueprint $table) {
+        Schema::create('habits', function (Blueprint $table) {
             $table->id();
             $table->string('name', 45);
             $table->string('progress', 45)->default('0%');
             $table->unsignedBigInteger('user_id')->nullable();
+            $table->enum('frequency_type', ['day', 'week'])->default('day'); 
+            $table->unsignedSmallInteger('frequency_value')->default(1); 
+            $table->unsignedSmallInteger('times_done_since_reset')->default(0); 
+            $table->timestamp('counter_reset_at')->nullable(); 
+            $table->timestamp('next_notification')->nullable();
+            $table->timestamp('last_done_at')->nullable();
 
             $table->timestamps();
             
             $table->index(['user_id']);
-
         });
     }
 
@@ -32,3 +37,4 @@ return new class extends Migration
         Schema::dropIfExists('habits');
     }
 };
+// После этого не забудьте выполнить: php artisan migrate

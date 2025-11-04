@@ -6,10 +6,10 @@
       </div>
 
       <nav class="flex flex-col gap-12 text-gray-800 text-[24px] font-bold">
-        <Link href="/Profile">Личный кабинет</Link>
+        <Link href="/profile">Личный кабинет</Link>
         <Link href="/history">История</Link>
         <Link href="/calendar">Календарь</Link>
-        <Link href="/telegram-bot">Телеграм-бот</Link>
+        <Link href="/telegrambot">Телеграм-бот</Link>
       </nav>
     </div>
   </aside>
@@ -26,9 +26,9 @@ const goCabinet = async () => {
   try {
     const res = await fetch('/api/user', { credentials: 'include' })
     if (res.ok) {
-      router.visit('/cabinet') // если авторизован, идём в кабинет
+      router.visit('/cabinet') 
     } else {
-      router.visit('/login') // если нет — на страницу входа
+      router.visit('/login')
     }
   } catch (err) {
     console.error(err)

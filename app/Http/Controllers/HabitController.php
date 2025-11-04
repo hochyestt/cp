@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Habit;
@@ -7,51 +8,53 @@ use Illuminate\Http\JsonResponse;
 
 class HabitController extends Controller
 {
-    public function index(): JsonResponse
-    {
-        $habits = auth()->user()->habits;
-        return response()->json($habits);
-    }
 
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:45',
             'progress' => 'nullable|string|max:45',
+            'frequency_type' => 'required|in:day,week',
+            'frequency_value' => 'required|integer|min:1',
         ]);
+        
+        $now = now();
 
-        $habit = auth()->user()->habits()->create($request->only([
-            'name', 'progress'
-        ]));
+        $habit = auth()->user()->habits()->create(array_merge(
+            $request->only(['name', 'progress', 'frequency_type', 'frequency_value']),
+            [
+                'next_notification' => $now, 
+                'counter_reset_at' => $now,
+            ]
+        ));
 
         return redirect()->route('home');
     }
-
-    public function show($id): JsonResponse
+public function destroy(Habit $habit)
     {
-        $habit = auth()->user()->habits()->findOrFail($id);
-        return response()->json($habit);
-    }
+        if ($habit->user_id !== auth()->id()) {
+            abort(403, 'У вас нет доступа к этой привычке.');
+        }
 
-    public function update(Request $request, $id): JsonResponse
-    {
-        $habit = auth()->user()->habits()->findOrFail($id);
-
-        $request->validate([
-            'name' => 'string|max:45',
-            'progress' => 'string|max:45',
-        ]);
-
-        $habit->update($request->all());
-
-        return response()->json($habit);
-    }
-
-    public function destroy($id): JsonResponse
-    {
-        $habit = auth()->user()->habits()->findOrFail($id);
         $habit->delete();
 
-        return response()->json(null, 204);
+        return redirect()->back(); 
+    }
+    public function markDone(Habit $habit): JsonResponse
+    {
+        $habit->times_done_since_reset++;
+        
+        $nextNotification = $habit->calculateNextNotificationTime();
+
+        $habit->update([
+            'last_done_at' => now(),
+            'next_notification' => $nextNotification, 
+            'times_done_since_reset' => $habit->times_done_since_reset,
+        ]);
+
+        return response()->json([
+            'message' => 'Привычка выполнена ✅', 
+            'next_notification' => $nextNotification->format('Y-m-d H:i:s')
+        ]);
     }
 }

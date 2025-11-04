@@ -14,6 +14,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'telegram_id',
     ];
 
     protected $hidden = [
@@ -40,12 +41,8 @@ class User extends Authenticatable
         return $this->hasMany(Statistic::class);
     }
 
-    public function telegramUsers()
-    {
-        return $this->hasMany(TelegramUser::class);
-    }
-
-    public function gpal()
+ 
+    public function goal()
     {
         return $this->hasMany(Gpal::class, 'habit_user_id', 'user_id');
     }

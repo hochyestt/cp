@@ -5,16 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class TelegramUser extends Model
+class CalendarEvent extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'telegram_id',
+        'yandex_event_id',
+        'title',
+        'description',
+        'start_time',
+        'end_time',
     ];
 
-    // Отношение: каждый TelegramUser принадлежит одному User
+    protected $casts = [
+        'start_time' => 'datetime',
+        'end_time' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

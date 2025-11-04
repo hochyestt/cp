@@ -4,14 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Inertia\Inertia;
 
 class TaskController extends Controller
 {
-    public function index(): JsonResponse
+    public function index()
     {
-        $tasks = auth()->user()->tasks;
-        return response()->json($tasks);
+        $tasks = Task::where('user_id', auth()->id())
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'title', 'description', 'start_time']); 
+
+        return Inertia::render('Tasks', [
+            'tasks' => $tasks,
+        ]);
     }
 
     public function store(Request $request)
@@ -19,45 +24,32 @@ class TaskController extends Controller
         $request->validate([
             'title' => 'required|string|max:45',
             'description' => 'nullable|string|max:45',
-            'status' => 'string|max:45',
-            'priority' => 'string|max:45',
+            'start_time' => 'nullable|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
         ]);
 
-        $task = auth()->user()->tasks()->create($request->only([
-            'title', 'description', 'status', 'priority'
-        ]));
+        auth()->user()->tasks()->create($request->only(['title', 'description', 'start_time', 'end_time']));
 
-        // Для Inertia - возвращаем редирект на home с обновленными данными
         return redirect()->route('home');
     }
 
-    public function show($id): JsonResponse
+    public function destroy(Task $task)
     {
-        $task = auth()->user()->tasks()->findOrFail($id);
-        return response()->json($task);
-    }
+        if ($task->user_id !== auth()->id()) {
+            abort(403, 'У вас нет доступа к этой задаче.');
+        }
 
-    public function update(Request $request, $id): JsonResponse
-    {
-        $task = auth()->user()->tasks()->findOrFail($id);
-        
-        $request->validate([
-            'title' => 'string|max:45',
-            'description' => 'nullable|string|max:45',
-            'status' => 'string|max:45',
-            'priority' => 'string|max:45',
-        ]);
-
-        $task->update($request->all());
-
-        return response()->json($task);
-    }
-
-    public function destroy($id): JsonResponse
-    {
-        $task = auth()->user()->tasks()->findOrFail($id);
         $task->delete();
 
-        return response()->json(null, 204);
+return redirect()->back();    }
+    
+    public function markCompleted(Task $task)
+    {
+        if ($task->user_id !== auth()->id()) {
+            abort(403, 'У вас нет доступа к этой задаче.');
+        }
+        
+        $task->update(['completed' => true]);
+        return response()->json(['message' => 'Задача выполнена ✅']);
     }
 }

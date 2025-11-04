@@ -59,7 +59,6 @@ const submit = () => {
         class="w-full mb-6 p-2 rounded bg-gray-200 border-none focus:ring-2 focus:ring-[#6b9b97] outline-none"
       />
 
-      <!-- Кнопка -->
       <button
         type="submit"
         class="bg-white text-[#3b1b2b] font-bold px-4 py-2 rounded-lg hover:bg-gray-200 transition"

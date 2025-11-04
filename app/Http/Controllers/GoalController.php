@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class GoalController extends Controller
 {
-    // Показать все цели
     public function index()
     {
         return response()->json(Goal::all());

@@ -35,7 +35,6 @@ return [
         'username' => env('TELEGRAM_BOT_USERNAME', 'YourBotUsername'),
         'token' => env('TELEGRAM_BOT_TOKEN'),
         'certificate_path' => env('TELEGRAM_CERTIFICATE_PATH'),
-        'webhook_url' => env('TELEGRAM_WEBHOOK_URL'),
         'allowed_updates' => null,
         'commands' => [],
 

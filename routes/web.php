@@ -1,14 +1,16 @@
 <?php
 
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\HabitController;
-use Illuminate\Foundation\Application;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TelegramWebhookController; 
-use Inertia\Inertia;
+use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\CalendarController; 
 
-// Главная страница (публичная)
+
 Route::get('/', function () {
     return Inertia::render('Home', [
         'canLogin' => Route::has('login'),
@@ -18,49 +20,46 @@ Route::get('/', function () {
     ]);
 });
 
-// Домашняя страница (после авторизации)
-Route::get('/home', function () {
-    return Inertia::render('Home', [
-        'tasks' => auth()->user()->tasks ?? [],
-        'habits' => auth()->user()->habits ?? [],
-    ]);
-})->middleware(['auth', 'verified'])->name('home');
 
-// Dashboard
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-// История
-Route::get('/history', function () {
-    return Inertia::render('History');
-})->middleware(['auth', 'verified'])->name('history');
-
-// Группа маршрутов требующих аутентификации
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Профиль
-    Route::get('/Profile', function () {
-    return Inertia::render('Profile');
-})->middleware(['auth', 'verified'])->name('history');
+
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/dashboard', fn() => Inertia::render('Dashboard'))->name('dashboard');
+    Route::get('/history', [HistoryController::class, 'index'])->name('history');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::post('/profile/telegram', [ProfileController::class, 'saveTelegramId'])->name('profile.telegram');
 
-    Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle'])
-    ->name('telegram.webhook');
-    // Задачи
-    Route::get('/tasks', [TaskController::class, 'index'])->name('tasks.index');         
-    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');        
-    Route::get('/tasks/{id}', [TaskController::class, 'show'])->name('tasks.show');     
-    Route::put('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');   
-    Route::delete('/tasks/{id}', [TaskController::class, 'destroy'])->name('tasks.destroy'); 
+    Route::prefix('calendar')->name('calendar.')->group(function () {
+        Route::get('/', [CalendarController::class, 'index'])->name('index'); 
+        
+        Route::get('/events', [CalendarController::class, 'getEvents'])->name('events'); 
+        
+        Route::post('/', [CalendarController::class, 'store'])->name('store');
+        Route::delete('/{event}', [CalendarController::class, 'destroy'])->name('destroy');
+    });
 
-    // Привычки
-    Route::get('/habits', [HabitController::class, 'index'])->name('habits.index');       
-    Route::post('/habits', [HabitController::class, 'store'])->name('habits.store');      
-    Route::get('/habits/{id}', [HabitController::class, 'show'])->name('habits.show');    
-    Route::put('/habits/{id}', [HabitController::class, 'update'])->name('habits.update');  
-    Route::delete('/habits/{id}', [HabitController::class, 'destroy'])->name('habits.destroy'); 
+    Route::prefix('tasks')->name('tasks.')->group(function () {
+        Route::get('/', [TaskController::class, 'index'])->name('index');
+        Route::post('/', [TaskController::class, 'store'])->name('store');
+        Route::get('/{task}', [TaskController::class, 'show'])->name('show');
+        Route::put('/{task}', [TaskController::class, 'update'])->name('update');
+        Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('habits')->name('habits.')->group(function () {
+        Route::get('/', [HabitController::class, 'index'])->name('index');
+        Route::post('/', [HabitController::class, 'store'])->name('store');
+        Route::get('/{habit}', [HabitController::class, 'show'])->name('show');
+        Route::put('/{habit}', [HabitController::class, 'update'])->name('update');
+        Route::delete('/{habit}', [HabitController::class, 'destroy'])->name('destroy');
+    });
+Route::get('/telegrambot', function () {
+    return Inertia::render('TelegramBot'); 
+})->name('telegramBot');
 });
-
 require __DIR__.'/auth.php';
+
+
